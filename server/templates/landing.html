@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}#4CK P07470{% endblock %}
+{% block content %}
+<section class="row align-items-center">
+  <div class="col-lg-6">
+    <h1 class="display-5 fw-bold mb-3">#4CK P07470 Training Arena</h1>
+    <p class="lead">Practice exploiting intentionally vulnerable flows to capture flags for SQL Injection, Stored XSS, and CSRF. Every student signs in with their university roll number.</p>
+    <ul class="list-check">
+      <li>Live SQL editor with injectable leaderboard queries.</li>
+      <li>Community board vulnerable to stored script payloads.</li>
+      <li>State-changing forms with no CSRF protections.</li>
+      <li>Flag scoring favors early submissions—race your classmates.</li>
+    </ul>
+    {% if not logged_in %}
+    <a class="btn btn-primary btn-lg mt-3" href="#login">Login to begin</a>
+    {% else %}
+    <a class="btn btn-success btn-lg mt-3" href="{{ url_for('dashboard') }}">Continue to dashboard</a>
+    {% endif %}
+  </div>
+  <div class="col-lg-5 offset-lg-1 mt-5 mt-lg-0 text-center">
+    <img src="{{ url_for('static', filename='img/hacker-grid.svg') }}" class="img-fluid hacker-graphic mb-4" alt="Hacker grid">
+    <div id="login" class="card shadow border-0">
+      <div class="card-body">
+        <h2 class="h4 fw-semibold mb-3">Student Login</h2>
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label">Roll Number</label>
+            <input class="form-control" name="roll_no" placeholder="22I-1666" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input class="form-control" name="password" type="password" required>
+          </div>
+          <button class="btn btn-dark w-100" type="submit">Enter the Lab</button>
+        </form>
+        <div class="mt-3 small text-muted">
+          Use the CSV seeding script to provision your real classroom roster.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

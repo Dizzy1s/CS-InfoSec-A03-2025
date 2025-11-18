@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Blind Gate{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm cyber-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+          <div>
+            <p class="text-uppercase small text-muted mb-1">Access Layer 7</p>
+            <h1 class="h4 fw-semibold mb-0">Vault Authentication Console</h1>
+          </div>
+          <span class="badge bg-dark text-white hacker-pill">Blind Challenge</span>
+        </div>
+        <p class="text-muted small mb-4">Submit the correct access token to enter the vault. The system only responds with <strong>ACCESS GRANTED</strong> or <strong>ACCESS DENIED</strong>. No stack traces. No query leaks.</p>
+        <form method="POST" class="mb-4">
+          <label class="form-label">Access token</label>
+          <div class="input-group">
+            <input class="form-control" name="guess" value="{{ guess }}" placeholder="FLAG{...}">
+            <button class="btn btn-primary" type="submit">Transmit</button>
+          </div>
+        </form>
+        {% if verdict %}
+        <div class="alert {{ 'alert-success' if verdict == 'ACCESS GRANTED' else 'alert-dark' }}">
+          <strong>{{ verdict }}</strong>
+          {% if success_flag %}
+            <div class="mt-2">Vault reveals: <code>{{ success_flag }}</code></div>
+          {% endif %}
+        </div>
+        {% endif %}
+        <div class="matrix-strip mt-4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

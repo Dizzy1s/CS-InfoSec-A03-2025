@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CTF Training Lab{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg border-bottom mb-4">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('landing') }}">
+          <img src="{{ url_for('static', filename='img/potato.svg') }}" alt="Potato" class="logo-potato">
+          #4CK P07470
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse">
+          <ul class="navbar-nav ms-auto">
+            {% if session.get("student_id") %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('sqli_lab') }}">SQLi Basic</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('sqli_contracts') }}">SQLi Advanced</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('sqli_blind') }}">SQLi Blind</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('xss_lab') }}">XSS Lab</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('csrf_lab') }}">CSRF Lab</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('flag_station') }}">Submit Flags</a></li>
+              <li class="nav-item"><a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="#login">Login</a></li>
+            {% endif %}
+            {% if session.get("admin_id") %}
+              <li class="nav-item"><a class="nav-link text-warning" href="{{ url_for('admin_panel') }}">Admin Panel</a></li>
+              <li class="nav-item"><a class="nav-link text-warning" href="{{ url_for('admin_logout') }}">Admin Logout</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_login') }}">Admin</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container pb-5">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'danger' else 'danger' }} shadow-sm">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
+

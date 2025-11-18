@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row gy-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h4 fw-semibold mb-3">Challenge Progress</h2>
+        <p class="text-muted mb-4">Capture the flag for each vulnerability. Use the navigation tabs to open the dedicated labs.</p>
+        <div class="list-group">
+          {% for challenge in challenges %}
+            <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+              <div>
+                <div class="fw-semibold">{{ challenge.category }}</div>
+                <div class="text-muted small">{{ challenge.description }}</div>
+              </div>
+              {% if challenge.submitted_at %}
+                <span class="badge bg-success-subtle text-success small">Captured ✓</span>
+              {% else %}
+                <span class="badge bg-warning-subtle text-warning small">Pending</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold mb-3">Live Scoreboard</h2>
+        <p class="small text-muted">Earlier flag captures are worth more points. Keep the crown!</p>
+        <ol class="list-group list-group-numbered">
+          {% for entry in leaderboard %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-semibold">{{ entry.name }}</span>
+              <span class="badge score-badge">{{ entry.score }} pts</span>
+            </div>
+            <div class="small text-muted">{{ entry.roll_no }} · Captures: {{ entry.captures }}</div>
+          </li>
+          {% else %}
+          <li class="list-group-item small text-muted">No captures yet.</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

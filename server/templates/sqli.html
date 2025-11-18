@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}SQLi Lab{% endblock %}
+{% block content %}
+<div class="row gy-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 fw-semibold mb-3">SQL Injection Playground</h1>
+        <p class="text-muted small">Search the leaderboard by player name. The backend concatenates your input directly into the SQL statement — no escaping!</p>
+        <form method="GET">
+          <label class="form-label">Name contains</label>
+          <div class="input-group">
+            <input class="form-control" name="term" value="{{ term }}" placeholder="%">
+            <button class="btn btn-primary" type="submit">Query</button>
+          </div>
+        </form>
+        {% if raw_query %}
+        <div class="mt-4">
+          <div class="fw-semibold small text-uppercase text-muted">Executed Query</div>
+          <pre class="bg-dark text-warning p-3 rounded small">{{ raw_query }}</pre>
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+          Backend error leaked: {{ error }}
+        </div>
+        {% endif %}
+        {% if rows %}
+        <table class="table mt-4">
+          <thead>
+            <tr>
+              <th>Roll</th>
+              <th>Name</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row.roll_no }}</td>
+              <td>{{ row.display_name }}</td>
+              <td>{{ row.points }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% elif raw_query %}
+        <p class="mt-4 text-muted">No rows returned — tweak your payload?</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold">Objective</h2>
+        <p>Dump the <code>flags</code> table by abusing the vulnerable leaderboard query.</p>
+        <ul class="small">
+          <li>Enumerate schema via <code>UNION SELECT</code> or boolean-based injection.</li>
+          <li>Discover <code>flags(code, category)</code> entries.</li>
+          <li>Submit the stolen flag via the station without sharing screenshots to maintain score.</li>
+        </ul>
+        <div class="alert alert-warning small">Tip: SQLite accepts <code>UNION SELECT 1,2,3</code> payloads. Align the column count!</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

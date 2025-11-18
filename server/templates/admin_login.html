@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow">
+      <div class="card-body">
+        <h1 class="h4 fw-semibold mb-3 text-center">#4CK Admin Console</h1>
+        <p class="small text-muted text-center">Use the credentials configured in <code>init_db.py</code> or update them in your deployment.</p>
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input class="form-control" name="password" type="password" required>
+          </div>
+          <button class="btn btn-dark w-100">Enter Console</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

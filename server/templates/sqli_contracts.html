@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}SQLi Contracts Lab{% endblock %}
+{% block content %}
+<div class="row gy-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 fw-semibold mb-3">Executive Contracts Search</h1>
+        <p class="text-muted small">Analysts use this tool to look up client contracts by name. Unfortunately the search term is spliced directly into the SQL string.</p>
+        <form method="GET">
+          <label class="form-label">Client name contains</label>
+          <div class="input-group">
+            <input class="form-control" name="client" value="{{ client }}" placeholder="%">
+            <button class="btn btn-primary" type="submit">Lookup</button>
+          </div>
+        </form>
+        {% if raw_query %}
+        <div class="mt-4">
+          <div class="fw-semibold small text-uppercase text-muted">Executed Query</div>
+          <pre class="bg-dark text-warning p-3 rounded small">{{ raw_query }}</pre>
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+          Backend error leaked: {{ error }}
+        </div>
+        {% endif %}
+        {% if rows %}
+        <table class="table mt-4">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Scope</th>
+              <th class="text-end">Budget</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td>{{ row.client_name }}</td>
+              <td>{{ row.scope }}</td>
+              <td class="text-end">${{ row.budget }}</td>
+            </tr>
+            <tr>
+              <td colspan="3">
+                <span class="text-muted small">Notes:</span>
+                <div>{{ row.confidential_notes }}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% elif raw_query %}
+        <p class="mt-4 text-muted">No results.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold">Objective</h2>
+        <p>Steal confidential notes and ultimately dump the <code>flags</code> table.</p>
+        <ul class="small">
+          <li>Determine column count by using <code>ORDER BY</code> / <code>UNION SELECT</code>.</li>
+          <li>Use stacked payloads to leak data even if no rows match.</li>
+          <li>Record whatever secret you extract in the flag station to lock in points.</li>
+        </ul>
+        <div class="alert alert-warning small">Tip: SQLite supports commenting with <code>--</code> and executing multiple statements when the driver allows it.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

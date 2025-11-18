@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h4 fw-semibold mb-1">#4CK Command Center</h1>
+    <p class="text-muted small mb-0">Monitor captures, download the DB, and keep potato glory intact.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <form method="POST" action="{{ url_for('admin_reset_progress') }}" onsubmit="return confirm('Reset all scores and captures? This cannot be undone.');">
+      <button class="btn btn-outline-danger">Reset Progress</button>
+    </form>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_download_db') }}">Download DB</a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-label">Students</div>
+      <div class="stat-value">{{ totals.student_count }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-label">Flags Captured</div>
+      <div class="stat-value">{{ totals.capture_count }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-label">Available Challenges</div>
+      <div class="stat-value">{{ totals.flag_count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold mb-3">Scoreboard</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Roll</th>
+                <th>Student</th>
+                <th>Captures</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in captures %}
+              <tr>
+                <td>{{ row.roll_no }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.captures }}</td>
+                <td>{{ row.score }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-muted text-center">No data yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold mb-3">Latest Captures</h2>
+        <ul class="list-group">
+          {% for entry in latest %}
+          <li class="list-group-item">
+            <div class="fw-semibold">{{ entry.roll_no }} · {{ entry.name }}</div>
+            <div class="small text-muted">{{ entry.category }} · {{ entry.points }} pts · {{ entry.submitted_at }}</div>
+          </li>
+          {% else %}
+          <li class="list-group-item small text-muted">No captures recorded.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

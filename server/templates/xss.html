@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Stored XSS Lab{% endblock %}
+{% block content %}
+<div class="row gy-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 fw-semibold mb-3">Discussion Board (Totally Safe... right?)</h1>
+        <p class="text-muted small">Post feedback for your classmates. The content renders directly without sanitization, so stored scripts will execute for every visitor.</p>
+        <form method="POST" class="mb-4">
+          <label class="form-label">Message</label>
+          <textarea class="form-control" name="content" rows="3" placeholder="<script>alert('pwned')</script>" required></textarea>
+          <button class="btn btn-outline-primary mt-2">Post message</button>
+        </form>
+        <div class="list-group xss-feed">
+          {% for message in messages %}
+          <div class="list-group-item">
+            <div class="small text-muted mb-1">{{ message.author }} · {{ message.created_at }}</div>
+            <div class="payload" data-author="{{ message.author|e }}">{{ message.content | safe }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 fw-semibold">Objective</h2>
+        <p>Craft a payload that executes arbitrary JavaScript to read sensitive data owned by the moderator.</p>
+        <div class="small text-muted">A hidden script exposes the flag only to executing JS:</div>
+        <pre class="bg-dark text-warning small p-3 rounded">window.challengeFlags.xss</pre>
+        <p class="small text-muted">Abuse stored XSS to read it and display/ship the value.</p>
+        <div class="alert alert-warning small">Once you obtain the code, submit it under the XSS category.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.challengeFlags = window.challengeFlags || {};
+  window.challengeFlags.xss = {{ xss_flag | tojson }};
+</script>
+{% endblock %}
+
