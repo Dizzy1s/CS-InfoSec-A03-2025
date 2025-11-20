@@ -7,4 +7,3 @@ PLAINTEXT_FLAGS_dummy = [
     ("CSRF", "FLAG{Hello_from_the_other_side}", "Forge a state-changing request to grab this flag"),
     ("STEG", "FLAG{Still_trying_dummy_flags}", "Bonus stego puzzle hidden in the site chrome."),
 ]
-

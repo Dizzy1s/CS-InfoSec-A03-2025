@@ -54,13 +54,23 @@
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
         <h2 class="h5 fw-semibold">Objective</h2>
-        <p>Dump the <code>flags</code> table by abusing the vulnerable leaderboard query.</p>
+        <p>Extract the hidden flag by exploiting the vulnerable leaderboard query.</p>
         <ul class="small">
-          <li>Enumerate schema via <code>UNION SELECT</code> or boolean-based injection.</li>
-          <li>Discover <code>flags(code, category)</code> entries.</li>
-          <li>Submit the stolen flag via the station without sharing screenshots to maintain score.</li>
+          <li>The query uses <code>LIKE '%{your_input}%'</code> - think about how to break out of this.</li>
+          <li>Use <code>UNION SELECT</code> to combine results from another table.</li>
+          <li>Submit the extracted flag via the flag station.</li>
         </ul>
-        <div class="alert alert-warning small">Tip: SQLite accepts <code>UNION SELECT 1,2,3</code> payloads. Align the column count!</div>
+        <div class="alert alert-info small mt-3">
+          <strong>💡 Hints:</strong>
+          <ul class="mb-0 mt-2">
+            <li>Start with <code>%'</code> to close the LIKE pattern and break the SQL string.</li>
+            <li>The original query selects 3 columns - your UNION must match this count.</li>
+            <li>Try: <code>%' UNION SELECT 1,2,3--</code> first to test column count.</li>
+            <li>Look for a table containing player secrets or rewards.</li>
+            <li>The flag column might be named something like <code>secret_token</code> or <code>token</code>.</li>
+            <li>You'll see multiple results - try submitting each one to find the correct flag.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

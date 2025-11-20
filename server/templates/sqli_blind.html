@@ -28,6 +28,15 @@
           {% endif %}
         </div>
         {% endif %}
+        <div class="alert alert-info small mt-3">
+          <strong>💡 Hints:</strong>
+          <ul class="mb-0 mt-2">
+            <li>This is a "blind" SQL injection - you only see success/failure, not the actual data.</li>
+            <li>The backend likely checks: <code>WHERE token = '{your_input}'</code>.</li>
+            <li>Think about SQL boolean logic - how can you make a condition always true?</li>
+            <li>remember injection starts with FLAG{...}</li>
+          </ul>
+        </div>
         <div class="matrix-strip mt-4"></div>
       </div>
     </div>

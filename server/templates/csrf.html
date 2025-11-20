@@ -21,7 +21,15 @@
       <div class="card-body">
         <h2 class="h5 fw-semibold">Objective</h2>
         <p>Convince the victim to visit a malicious page that sends a POST request to update their email. The script reveals the flag when the forged request runs.</p>
-        <div class="alert alert-info small">
+        <div class="alert alert-info small mt-3">
+          <strong>💡 Hints:</strong>
+          <ul class="mb-0 mt-2">
+            <li>CSRF = Cross-Site Request Forgery - tricking a user into making a request they didn't intend.</li>
+            <li>The form has no CSRF protection - any website can submit it if the user is logged in.</li>
+            <li>use Console after clicking on reditrection page</li>
+          </ul>
+        </div>
+        <div class="alert alert-warning small mt-2">
           Successful CSRF requests set a secret header accessible via <code>window.challengeFlags.csrf</code>.
         </div>
         <p class="small text-muted">Submit that flag value to finish the challenge.</p>
@@ -33,7 +41,8 @@
 {% block scripts %}
 <script>
   window.challengeFlags = window.challengeFlags || {};
-  window.challengeFlags.csrf = {{ csrf_flag | tojson }};
+  const csrfFlagRaw = "{{ csrf_flag | default('', true) | urlencode }}";
+  window.challengeFlags.csrf = csrfFlagRaw ? decodeURIComponent(csrfFlagRaw) : null;
 </script>
 {% endblock %}
 

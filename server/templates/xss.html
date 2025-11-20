@@ -9,7 +9,7 @@
         <p class="text-muted small">Post feedback for your classmates. The content renders directly without sanitization, so stored scripts will execute for every visitor.</p>
         <form method="POST" class="mb-4">
           <label class="form-label">Message</label>
-          <textarea class="form-control" name="content" rows="3" placeholder="<script>alert('pwned')</script>" required></textarea>
+          <textarea class="form-control" name="content" rows="3" placeholder="Enter your message here" required></textarea>
           <button class="btn btn-outline-primary mt-2">Post message</button>
         </form>
         <div class="list-group xss-feed">
@@ -40,7 +40,7 @@
 {% block scripts %}
 <script>
   window.challengeFlags = window.challengeFlags || {};
-  window.challengeFlags.xss = {{ xss_flag | tojson }};
+  window.challengeFlags.xss = decodeURIComponent("{{ xss_flag | default('', true) | urlencode }}");
 </script>
 {% endblock %}
 

@@ -1,4 +1,5 @@
 import os
+import sqlite3
 from functools import wraps
 from flask import (
     Flask,
@@ -113,6 +114,34 @@ def _decrypt_row_values(rows):
                 decrypted_row[key] = value
         decrypted_rows.append(decrypted_row)
     return decrypted_rows
+
+
+def _combined_flag(
+    head_sql,
+    head_column,
+    tail_sql,
+    tail_column,
+    task_name,
+    head_params=(),
+    tail_params=(),
+):
+    """Fetch encrypted halves, decrypt, and concatenate."""
+    head_value = ""
+    tail_value = ""
+
+    row = g.db.execute(head_sql, head_params).fetchone()
+    if row and head_column in row.keys():
+        head_value = decrypt_flag(row[head_column], task_name)
+
+    if tail_sql:
+        try:
+            tail_row = g.db.execute(tail_sql, tail_params).fetchone()
+        except sqlite3.OperationalError:
+            tail_row = None
+        if tail_row and tail_column in tail_row.keys():
+            tail_value = decrypt_flag(tail_row[tail_column], task_name)
+
+    return f"{head_value}{tail_value}"
 
 
 @app.route("/")
@@ -285,7 +314,7 @@ def sqli_blind():
             encrypted_flag = g.db.execute(
                 "SELECT auth_token FROM access_keys WHERE status_code = 200 LIMIT 1"
             ).fetchone()["auth_token"]
-            success_flag = decrypt_flag(encrypted_flag)
+            success_flag = decrypt_flag(encrypted_flag, "SQLI_BLIND")
     return render_template(
         "sqli_blind.html",
         student=student,
@@ -323,10 +352,13 @@ def xss_lab():
         """
     ).fetchall()
     # Get XSS flag from message_vault table (hidden_content column)
-    encrypted_xss_flag = g.db.execute(
-        "SELECT hidden_content FROM message_vault WHERE priority_level = 9 LIMIT 1"
-    ).fetchone()["hidden_content"]
-    xss_flag = decrypt_flag(encrypted_xss_flag)
+    xss_flag = _combined_flag(
+        "SELECT hidden_content FROM message_vault WHERE priority_level = 9 LIMIT 1",
+        "hidden_content",
+        "SELECT hidden_tail FROM message_vault_tail WHERE priority_level = 9 LIMIT 1",
+        "hidden_tail",
+        "XSS",
+    )
     return render_template(
         "xss.html",
         student=student,
@@ -340,10 +372,13 @@ def xss_lab():
 def csrf_lab():
     student = current_student()
     # Get CSRF flag from session_tokens table (session_data column)
-    encrypted_csrf_flag = g.db.execute(
-        "SELECT session_data FROM session_tokens WHERE token_status = 1 LIMIT 1"
-    ).fetchone()["session_data"]
-    csrf_flag = decrypt_flag(encrypted_csrf_flag)
+    csrf_flag = _combined_flag(
+        "SELECT session_data FROM session_tokens WHERE token_status = 1 LIMIT 1",
+        "session_data",
+        "SELECT session_tail FROM session_tokens_tail WHERE token_status = 1 LIMIT 1",
+        "session_tail",
+        "CSRF",
+    )
     return render_template("csrf.html", student=student, csrf_flag=csrf_flag)
 
 
@@ -434,7 +469,7 @@ def submit_flag():
                 "SELECT secret_token FROM player_secrets WHERE reward_points = 999 LIMIT 1"
             ).fetchone()
             if result:
-                decrypted = decrypt_flag(result["secret_token"])
+                decrypted = decrypt_flag(result["secret_token"], "SQLI")
                 if hash_flag(decrypted) == submitted_hash:
                     is_valid = True
         elif category == "SQLI_ADV":
@@ -443,7 +478,7 @@ def submit_flag():
                 "SELECT encrypted_data FROM client_vault WHERE access_level = 7 LIMIT 1"
             ).fetchone()
             if result:
-                decrypted = decrypt_flag(result["encrypted_data"])
+                decrypted = decrypt_flag(result["encrypted_data"], "SQLI_ADV")
                 if hash_flag(decrypted) == submitted_hash:
                     is_valid = True
         elif category == "SQLI_BLIND":
@@ -452,36 +487,42 @@ def submit_flag():
                 "SELECT auth_token FROM access_keys WHERE status_code = 200 LIMIT 1"
             ).fetchone()
             if result:
-                decrypted = decrypt_flag(result["auth_token"])
+                decrypted = decrypt_flag(result["auth_token"], "SQLI_BLIND")
                 if hash_flag(decrypted) == submitted_hash:
                     is_valid = True
         elif category == "XSS":
             # Check message_vault table (hidden_content column)
-            result = g.db.execute(
-                "SELECT hidden_content FROM message_vault WHERE priority_level = 9 LIMIT 1"
-            ).fetchone()
-            if result:
-                decrypted = decrypt_flag(result["hidden_content"])
-                if hash_flag(decrypted) == submitted_hash:
-                    is_valid = True
+            decrypted = _combined_flag(
+                "SELECT hidden_content FROM message_vault WHERE priority_level = 9 LIMIT 1",
+                "hidden_content",
+                "SELECT hidden_tail FROM message_vault_tail WHERE priority_level = 9 LIMIT 1",
+                "hidden_tail",
+                "XSS",
+            )
+            if decrypted and hash_flag(decrypted) == submitted_hash:
+                is_valid = True
         elif category == "CSRF":
             # Check session_tokens table (session_data column)
-            result = g.db.execute(
-                "SELECT session_data FROM session_tokens WHERE token_status = 1 LIMIT 1"
-            ).fetchone()
-            if result:
-                decrypted = decrypt_flag(result["session_data"])
-                if hash_flag(decrypted) == submitted_hash:
-                    is_valid = True
+            decrypted = _combined_flag(
+                "SELECT session_data FROM session_tokens WHERE token_status = 1 LIMIT 1",
+                "session_data",
+                "SELECT session_tail FROM session_tokens_tail WHERE token_status = 1 LIMIT 1",
+                "session_tail",
+                "CSRF",
+            )
+            if decrypted and hash_flag(decrypted) == submitted_hash:
+                is_valid = True
         elif category == "STEG":
             # Check image_metadata table (embedded_data column)
-            result = g.db.execute(
-                "SELECT embedded_data FROM image_metadata WHERE image_type = 1 LIMIT 1"
-            ).fetchone()
-            if result:
-                decrypted = decrypt_flag(result["embedded_data"])
-                if hash_flag(decrypted) == submitted_hash:
-                    is_valid = True
+            decrypted = _combined_flag(
+                "SELECT embedded_data FROM image_metadata WHERE image_type = 1 LIMIT 1",
+                "embedded_data",
+                "SELECT embedded_tail FROM image_metadata_tail WHERE image_type = 1 LIMIT 1",
+                "embedded_tail",
+                "STEG",
+            )
+            if decrypted and hash_flag(decrypted) == submitted_hash:
+                is_valid = True
         else:
             flash(f"Unknown challenge category: {category}", "danger")
             return redirect(url_for("flag_station"))

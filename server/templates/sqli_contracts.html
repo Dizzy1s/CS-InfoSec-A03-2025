@@ -60,13 +60,25 @@
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
         <h2 class="h5 fw-semibold">Objective</h2>
-        <p>Steal confidential notes and ultimately dump the <code>flags</code> table.</p>
+        <p>Extract confidential data from the contracts database using SQL injection.</p>
         <ul class="small">
-          <li>Determine column count by using <code>ORDER BY</code> / <code>UNION SELECT</code>.</li>
-          <li>Use stacked payloads to leak data even if no rows match.</li>
-          <li>Record whatever secret you extract in the flag station to lock in points.</li>
+          <li>The search uses <code>LIKE '%{your_input}%'</code> - inject a UNION SELECT.</li>
+          <li>Determine the exact column count first (try <code>ORDER BY 1</code>, <code>ORDER BY 2</code>, etc.).</li>
+          <li>Extract the flag from a separate vault table.</li>
         </ul>
-        <div class="alert alert-warning small">Tip: SQLite supports commenting with <code>--</code> and executing multiple statements when the driver allows it.</div>
+        <div class="alert alert-info small mt-3">
+          <strong>💡 Hints:</strong>
+          <ul class="mb-0 mt-2">
+            <li>Start with <code>%'</code> to close the LIKE pattern.</li>
+            <li>Count columns: <code>%' ORDER BY 1--</code>, <code>%' ORDER BY 2--</code>, etc. until you get an error.</li>
+            <li>The query has 4 columns: client_name, scope, budget, confidential_notes.</li>
+            <li>Use <code>UNION SELECT</code> with 4 columns matching the types (TEXT, TEXT, INTEGER, TEXT).</li>
+            <li>Look for a table named something like <code>client_vault</code> or <code>vault</code>.</li>
+            <li>The flag might be in a column like <code>encrypted_data</code> or <code>data</code>.</li>
+            <li>Place the flag column in the 4th position to see it in the "Notes" field.</li>
+            <li>Multiple results will appear - submit each one to find the correct flag.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

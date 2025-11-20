@@ -6,7 +6,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash
 
 from database import DB_PATH, get_connection
-from flag_cipher import encrypt_flag, hash_flag
+from flag_cipher import encrypt_flag, hash_flag, split_flag_halves
 
 try:
     from flag_payloads import PLAINTEXT_FLAGS
@@ -98,6 +98,15 @@ def bootstrap_schema(conn):
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- Companion tail table for XSS halves
+            CREATE TABLE IF NOT EXISTS message_vault_tail (
+                message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hidden_tail TEXT NOT NULL,
+                priority_level INTEGER DEFAULT 0,
+                message_type TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
             -- Separate table for CSRF challenge (isolated from others)
             CREATE TABLE IF NOT EXISTS session_tokens (
                 token_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -107,10 +116,28 @@ def bootstrap_schema(conn):
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             );
 
+            -- Companion tail table for CSRF halves
+            CREATE TABLE IF NOT EXISTS session_tokens_tail (
+                token_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_tail TEXT NOT NULL,
+                token_status INTEGER DEFAULT 0,
+                token_type TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
             -- Separate table for STEG challenge (isolated from others)
             CREATE TABLE IF NOT EXISTS image_metadata (
                 image_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 embedded_data TEXT NOT NULL,
+                image_type INTEGER DEFAULT 0,
+                metadata_info TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
+            -- Companion tail table for STEG halves
+            CREATE TABLE IF NOT EXISTS image_metadata_tail (
+                image_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                embedded_tail TEXT NOT NULL,
                 image_type INTEGER DEFAULT 0,
                 metadata_info TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -198,12 +225,13 @@ def seed_sqli_basic_flag(conn):
         with conn:
             # Clear and insert flag with dummy data to confuse sqlmap
             conn.execute("DELETE FROM player_secrets")
+            task_name = "SQLI"
             conn.execute(
                 """
                 INSERT INTO player_secrets (secret_token, reward_points)
                 VALUES (?, ?)
                 """,
-                (encrypt_flag(code), 999),
+                (encrypt_flag(code, task_name), 999),
             )
             # Add realistic dummy flags to confuse students and automated tools
             dummy_flags = [
@@ -214,12 +242,12 @@ def seed_sqli_basic_flag(conn):
                 "FLAG{This_is_not_the_flag}",
             ]
             for i, dummy_flag in enumerate(dummy_flags):
-                conn.execute(
+                    conn.execute(
                     """
                     INSERT INTO player_secrets (secret_token, reward_points)
                     VALUES (?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 100 + i),
+                    (encrypt_flag(dummy_flag, task_name), 100 + i),
                 )
 
 
@@ -233,12 +261,13 @@ def seed_sqli_adv_flag(conn):
         with conn:
             # Clear and insert flag with dummy data
             conn.execute("DELETE FROM client_vault")
+            task_name = "SQLI_ADV"
             conn.execute(
                 """
                 INSERT INTO client_vault (encrypted_data, access_level, metadata)
                 VALUES (?, ?, ?)
                 """,
-                (encrypt_flag(code), 7, "classified"),
+                (encrypt_flag(code, task_name), 7, "classified"),
             )
             # Add realistic dummy flags to confuse students and automated tools
             dummy_flags = [
@@ -248,12 +277,12 @@ def seed_sqli_adv_flag(conn):
                 "FLAG{Keep_looking_elsewhere}",
             ]
             for i, dummy_flag in enumerate(dummy_flags):
-                conn.execute(
+                    conn.execute(
                     """
                     INSERT INTO client_vault (encrypted_data, access_level, metadata)
                     VALUES (?, ?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 5, "public"),
+                    (encrypt_flag(dummy_flag, task_name), 5, "public"),
                 )
 
 
@@ -267,12 +296,13 @@ def seed_sqli_blind_flag(conn):
         with conn:
             # Clear and insert flag
             conn.execute("DELETE FROM access_keys")
+            task_name = "SQLI_BLIND"
             conn.execute(
                 """
                 INSERT INTO access_keys (auth_token, status_code)
                 VALUES (?, ?)
                 """,
-                (encrypt_flag(code), 200),
+                (encrypt_flag(code, task_name), 200),
             )
             # Add realistic dummy flags to confuse students and automated tools
             dummy_flags = [
@@ -284,12 +314,12 @@ def seed_sqli_blind_flag(conn):
                 "FLAG{This_wont_work_here}",
             ]
             for i, dummy_flag in enumerate(dummy_flags):
-                conn.execute(
+                    conn.execute(
                     """
                     INSERT INTO access_keys (auth_token, status_code)
                     VALUES (?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 403),
+                    (encrypt_flag(dummy_flag, task_name), 403),
                 )
 
 
@@ -302,12 +332,22 @@ def seed_xss_flag(conn):
         _, code, _ = xss_flag
         with conn:
             conn.execute("DELETE FROM message_vault")
+            conn.execute("DELETE FROM message_vault_tail")
+            task_name = "XSS"
+            first_half, second_half = split_flag_halves(code)
             conn.execute(
                 """
                 INSERT INTO message_vault (hidden_content, priority_level, message_type)
                 VALUES (?, ?, ?)
                 """,
-                (encrypt_flag(code), 9, "critical"),
+                (encrypt_flag(first_half, task_name), 9, "critical"),
+            )
+            conn.execute(
+                """
+                INSERT INTO message_vault_tail (hidden_tail, priority_level, message_type)
+                VALUES (?, ?, ?)
+                """,
+                (encrypt_flag(second_half, task_name), 9, "critical"),
             )
             # Add dummy flags
             dummy_flags = [
@@ -316,12 +356,20 @@ def seed_xss_flag(conn):
                 "FLAG{Not_the_xss_flag}",
             ]
             for dummy_flag in dummy_flags:
+                first_half, second_half = split_flag_halves(dummy_flag)
                 conn.execute(
                     """
                     INSERT INTO message_vault (hidden_content, priority_level, message_type)
                     VALUES (?, ?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 5, "normal"),
+                    (encrypt_flag(first_half, task_name), 5, "normal"),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO message_vault_tail (hidden_tail, priority_level, message_type)
+                    VALUES (?, ?, ?)
+                    """,
+                    (encrypt_flag(second_half, task_name), 5, "normal"),
                 )
 
 
@@ -334,12 +382,22 @@ def seed_csrf_flag(conn):
         _, code, _ = csrf_flag
         with conn:
             conn.execute("DELETE FROM session_tokens")
+            conn.execute("DELETE FROM session_tokens_tail")
+            task_name = "CSRF"
+            first_half, second_half = split_flag_halves(code)
             conn.execute(
                 """
                 INSERT INTO session_tokens (session_data, token_status, token_type)
                 VALUES (?, ?, ?)
                 """,
-                (encrypt_flag(code), 1, "active"),
+                (encrypt_flag(first_half, task_name), 1, "active"),
+            )
+            conn.execute(
+                """
+                INSERT INTO session_tokens_tail (session_tail, token_status, token_type)
+                VALUES (?, ?, ?)
+                """,
+                (encrypt_flag(second_half, task_name), 1, "active"),
             )
             # Add dummy flags
             dummy_flags = [
@@ -348,12 +406,20 @@ def seed_csrf_flag(conn):
                 "FLAG{Not_the_csrf_flag}",
             ]
             for dummy_flag in dummy_flags:
+                first_half, second_half = split_flag_halves(dummy_flag)
                 conn.execute(
                     """
                     INSERT INTO session_tokens (session_data, token_status, token_type)
                     VALUES (?, ?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 0, "inactive"),
+                    (encrypt_flag(first_half, task_name), 0, "inactive"),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO session_tokens_tail (session_tail, token_status, token_type)
+                    VALUES (?, ?, ?)
+                    """,
+                    (encrypt_flag(second_half, task_name), 0, "inactive"),
                 )
 
 
@@ -366,12 +432,22 @@ def seed_steg_flag(conn):
         _, code, _ = steg_flag
         with conn:
             conn.execute("DELETE FROM image_metadata")
+            conn.execute("DELETE FROM image_metadata_tail")
+            task_name = "STEG"
+            first_half, second_half = split_flag_halves(code)
             conn.execute(
                 """
                 INSERT INTO image_metadata (embedded_data, image_type, metadata_info)
                 VALUES (?, ?, ?)
                 """,
-                (encrypt_flag(code), 1, "hidden"),
+                (encrypt_flag(first_half, task_name), 1, "hidden"),
+            )
+            conn.execute(
+                """
+                INSERT INTO image_metadata_tail (embedded_tail, image_type, metadata_info)
+                VALUES (?, ?, ?)
+                """,
+                (encrypt_flag(second_half, task_name), 1, "hidden"),
             )
             # Add dummy flags
             dummy_flags = [
@@ -380,12 +456,20 @@ def seed_steg_flag(conn):
                 "FLAG{Not_the_steg_flag}",
             ]
             for dummy_flag in dummy_flags:
+                first_half, second_half = split_flag_halves(dummy_flag)
                 conn.execute(
                     """
                     INSERT INTO image_metadata (embedded_data, image_type, metadata_info)
                     VALUES (?, ?, ?)
                     """,
-                    (encrypt_flag(dummy_flag), 0, "visible"),
+                    (encrypt_flag(first_half, task_name), 0, "visible"),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO image_metadata_tail (embedded_tail, image_type, metadata_info)
+                    VALUES (?, ?, ?)
+                    """,
+                    (encrypt_flag(second_half, task_name), 0, "visible"),
                 )
 
 
